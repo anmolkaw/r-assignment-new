@@ -10,6 +10,8 @@ import { module1RequestSchema } from "@/lib/validators/module1";
 import { errorResponse, parseJsonBody, successResponse } from "@/lib/utils/api";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   let runId: string | null = null;

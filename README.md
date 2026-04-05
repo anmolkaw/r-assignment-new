@@ -252,6 +252,97 @@ git check-ignore -v .env .env.local .env.production.local
 curl http://localhost:3001/api/diagnostics/env
 ```
 
+## Production Deployment (Vercel + Hosted Postgres)
+
+Recommended target for this stack:
+- App hosting: **Vercel** (best fit for Next.js App Router + route handlers)
+- Database: **Supabase Postgres** or **Neon Postgres**
+
+This repository is deployment-ready for Vercel with Prisma and Postgres.
+
+### 1) Provision a production Postgres database
+
+Create a database in Supabase or Neon, then copy a PostgreSQL connection string and set it as:
+- `DATABASE_URL`
+
+For a demo deployment, use a standard direct Postgres connection string for `DATABASE_URL` so Prisma migrations and runtime use the same URL reliably.
+
+### 2) Create a Vercel project
+
+1. Import this GitHub repo into Vercel.
+2. Framework preset: `Next.js` (auto-detected).
+3. Install command: `npm install` (default).
+4. Build command: `npm run build`.
+5. Output directory: leave default (`.next`).
+
+### 3) Configure production environment variables in Vercel
+
+Required:
+- `DATABASE_URL`
+- `GROQ_API_KEY`
+
+Optional:
+- `OPENAI_MODEL` (default: `openai/gpt-oss-20b`)
+- `OPENAI_TIMEOUT_MS` (default: `45000`)
+- `NEXT_PUBLIC_APP_NAME` (UI title)
+
+Important:
+- Never expose `GROQ_API_KEY` to the frontend.
+- Do not prefix server secrets with `NEXT_PUBLIC_`.
+
+### 4) Run Prisma migrations against production DB
+
+Before first production verification, run:
+
+```bash
+npm install
+DATABASE_URL="your-production-db-url" npm run db:deploy
+```
+
+`db:deploy` runs `prisma migrate deploy` and creates/updates tables required by:
+- `ProductClassificationRun`
+- `ProposalRun`
+- `AiLog`
+
+### 5) Deploy and verify
+
+After Vercel deploy succeeds, verify:
+
+- `GET /api/dashboard/stats`
+- `GET /api/logs`
+- `POST /api/module1/classify`
+- `POST /api/module2/proposal`
+
+Example checks:
+
+```bash
+curl https://<your-domain>/api/dashboard/stats
+curl "https://<your-domain>/api/logs?limit=5"
+```
+
+```bash
+curl -X POST "https://<your-domain>/api/module1/classify" \
+  -H "Content-Type: application/json" \
+  -d '{"productName":"Compostable Tray","description":"Compostable molded-fiber tray for meals and deliveries.","material":"Bagasse","useCase":"Takeaway food service"}'
+```
+
+```bash
+curl -X POST "https://<your-domain>/api/module2/proposal" \
+  -H "Content-Type: application/json" \
+  -d '{"clientName":"GreenBite Catering","industry":"Food Service","clientGoals":"Replace single-use plastics","budgetLimit":5000}'
+```
+
+If deployment works correctly:
+- valid payloads return `200` with structured JSON outputs
+- malformed JSON returns `400` (`Invalid JSON body`)
+- invalid payloads return `400` validation errors
+
+### Deployment-safe scripts in this repo
+
+- `npm run build`: generates Prisma client and builds Next.js
+- `npm run db:deploy`: applies Prisma migrations for production
+- `npm run lint`: lint check before deploy
+
 ## How to Demo Module 1 and Module 2
 
 ### Demo Module 1
