@@ -182,7 +182,7 @@ cp .env.example .env
 
 3. Configure `.env` values:
 - `DATABASE_URL`
-- `OPENAI_API_KEY` (or `GROQ_API_KEY`)
+- `GROQ_API_KEY`
 - optional: `OPENAI_MODEL`, `OPENAI_TIMEOUT_MS`, `NEXT_PUBLIC_APP_NAME`
 
 4. Create database schema:
@@ -211,12 +211,36 @@ npm run build
 Defined in `.env.example`:
 
 - `DATABASE_URL=` PostgreSQL connection string
-- `OPENAI_API_KEY=` OpenAI API key
-- `GROQ_API_KEY=` optional Groq key (OpenAI-compatible path)
-- `OPENAI_BASE_URL=` optional base URL override (example: `https://api.groq.com/openai/v1`)
-- `OPENAI_MODEL=` default `gpt-4.1-mini`
+- `GROQ_API_KEY=` Groq API key (server-side only)
+- `OPENAI_MODEL=` default `openai/gpt-oss-20b`
 - `OPENAI_TIMEOUT_MS=` request timeout in ms
 - `NEXT_PUBLIC_APP_NAME=` UI app title
+
+## Secure Groq Environment Setup
+
+1. Create local env file:
+```bash
+cp .env.example .env
+```
+
+2. Add your real key only in `.env`:
+```bash
+GROQ_API_KEY=your_key_here
+```
+
+3. Never commit secrets:
+- `.env`, `.env.local`, and `.env.*.local` are git-ignored.
+- The key is consumed only on the server in `lib/ai/client.ts`.
+
+4. Verify `.env` is ignored by git:
+```bash
+git check-ignore -v .env .env.local .env.production.local
+```
+
+5. Verify key exists without printing it:
+```bash
+[ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY loaded" || echo "GROQ_API_KEY missing"
+```
 
 ## How to Demo Module 1 and Module 2
 

@@ -1,40 +1,30 @@
+import "server-only";
 import OpenAI from "openai";
 import { AiServiceError } from "@/lib/ai/types";
 
 let cachedClient: OpenAI | null = null;
+const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 
-function getApiKey() {
-  return process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY || "";
-}
-
-function getBaseUrl() {
-  if (process.env.OPENAI_BASE_URL) {
-    return process.env.OPENAI_BASE_URL;
-  }
-
-  // If only GROQ_API_KEY is present, default to Groq's OpenAI-compatible endpoint.
-  if (!process.env.OPENAI_API_KEY && process.env.GROQ_API_KEY) {
-    return "https://api.groq.com/openai/v1";
-  }
-
-  return undefined;
-}
-
-export function getOpenAIClient() {
-  const apiKey = getApiKey();
-  const baseURL = getBaseUrl();
+function getGroqApiKey() {
+  const apiKey = process.env.GROQ_API_KEY?.trim();
 
   if (!apiKey) {
     throw new AiServiceError(
-      "Missing API key. Set OPENAI_API_KEY or GROQ_API_KEY in environment variables.",
+      "GROQ_API_KEY is missing. Set GROQ_API_KEY in your server environment (for example, in .env).",
       "CONFIG"
     );
   }
 
+  return apiKey;
+}
+
+export function getOpenAIClient() {
+  const apiKey = getGroqApiKey();
+
   if (!cachedClient) {
     cachedClient = new OpenAI({
       apiKey,
-      baseURL
+      baseURL: GROQ_BASE_URL
     });
   }
 
@@ -42,7 +32,7 @@ export function getOpenAIClient() {
 }
 
 export function getOpenAIModel() {
-  return process.env.OPENAI_MODEL || "gpt-4.1-mini";
+  return process.env.OPENAI_MODEL || "openai/gpt-oss-20b";
 }
 
 export function getOpenAITimeoutMs() {
