@@ -108,6 +108,21 @@ export default function Module1Page() {
     mutation.mutate(parsed.data);
   }
 
+  function loadSavedRun(run: ProductRun) {
+    if (!run.parsedOutputJson) {
+      toast.error("This run has no saved output to preview.");
+      return;
+    }
+
+    setResult(run.parsedOutputJson);
+    setRunInfo({
+      runId: run.id,
+      model: "saved-history-run",
+      status: run.status
+    });
+    toast.success("Loaded saved Module 1 output.");
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -260,7 +275,12 @@ export default function Module1Page() {
                 </div>
               ) : historyQuery.data?.runs?.length ? (
                 historyQuery.data.runs.map((run) => (
-                  <div key={run.id} className="rounded-lg border border-border/60 bg-background/40 p-3">
+                  <button
+                    key={run.id}
+                    type="button"
+                    onClick={() => loadSavedRun(run)}
+                    className="w-full rounded-lg border border-border/60 bg-background/40 p-3 text-left transition-colors hover:bg-background/65"
+                  >
                     <div className="mb-2 flex items-center justify-between">
                       <p className="text-sm font-medium">{run.productName}</p>
                       <StatusBadge status={run.status} />
@@ -271,7 +291,8 @@ export default function Module1Page() {
                         {run.parsedOutputJson.primaryCategory} • {run.parsedOutputJson.subCategory}
                       </p>
                     ) : null}
-                  </div>
+                    <p className="mt-2 text-[11px] uppercase tracking-wide text-primary/80">Click to load saved output</p>
+                  </button>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">No history yet.</p>
