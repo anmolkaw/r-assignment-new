@@ -62,6 +62,7 @@ export default function DashboardPage() {
           <Skeleton className="h-32" />
         </div>
       ) : showStatsError ? (
+        
         <Card className="border-destructive/40 bg-destructive/10">
           <CardHeader>
             <CardTitle className="text-base">Unable to load dashboard stats</CardTitle>
@@ -113,7 +114,7 @@ export default function DashboardPage() {
             </AnimatedContainer>
           </div>
 
-          {data?.recentFailures ? (
+          {/* {data?.recentFailures ? (
             <AnimatedContainer delay={0.25}>
               <Card className="border-amber-500/35 bg-amber-500/10">
                 <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -129,7 +130,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </AnimatedContainer>
-          ) : null}
+          ) : null}  */}
         </>
       )}
 
