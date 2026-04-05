@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RunStatus {
+  PENDING
+  SUCCESS
+  FAILURE
+}
+
+enum ModuleType {
+  MODULE_1
+  MODULE_2
+  MODULE_3
+  MODULE_4
+}
+
+model ProductClassificationRun {
+  id               String    @id @default(cuid())
+  productName      String
+  inputJson        Json
+  prompt           String
+  rawAiResponse    String?
+  parsedOutputJson Json?
+  status           RunStatus @default(PENDING)
+  errorMessage     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model ProposalRun {
+  id               String    @id @default(cuid())
+  clientName       String
+  industry         String
+  budgetLimit      Float
+  inputJson        Json
+  prompt           String
+  rawAiResponse    String?
+  parsedOutputJson Json?
+  status           RunStatus @default(PENDING)
+  errorMessage     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model AiLog {
+  id                 String     @id @default(cuid())
+  moduleType         ModuleType
+  prompt             String
+  rawResponse        String?
+  parsedResponseJson Json?
+  success            Boolean
+  errorMessage       String?
+  createdAt          DateTime   @default(now())
+}
