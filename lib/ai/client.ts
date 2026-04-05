@@ -3,15 +3,39 @@ import { AiServiceError } from "@/lib/ai/types";
 
 let cachedClient: OpenAI | null = null;
 
+function getApiKey() {
+  return process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY || "";
+}
+
+function getBaseUrl() {
+  if (process.env.OPENAI_BASE_URL) {
+    return process.env.OPENAI_BASE_URL;
+  }
+
+  // If only GROQ_API_KEY is present, default to Groq's OpenAI-compatible endpoint.
+  if (!process.env.OPENAI_API_KEY && process.env.GROQ_API_KEY) {
+    return "https://api.groq.com/openai/v1";
+  }
+
+  return undefined;
+}
+
 export function getOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = getApiKey();
+  const baseURL = getBaseUrl();
 
   if (!apiKey) {
-    throw new AiServiceError("OPENAI_API_KEY is missing from environment variables.", "CONFIG");
+    throw new AiServiceError(
+      "Missing API key. Set OPENAI_API_KEY or GROQ_API_KEY in environment variables.",
+      "CONFIG"
+    );
   }
 
   if (!cachedClient) {
-    cachedClient = new OpenAI({ apiKey });
+    cachedClient = new OpenAI({
+      apiKey,
+      baseURL
+    });
   }
 
   return cachedClient;

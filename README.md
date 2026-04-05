@@ -182,7 +182,7 @@ cp .env.example .env
 
 3. Configure `.env` values:
 - `DATABASE_URL`
-- `OPENAI_API_KEY`
+- `OPENAI_API_KEY` (or `GROQ_API_KEY`)
 - optional: `OPENAI_MODEL`, `OPENAI_TIMEOUT_MS`, `NEXT_PUBLIC_APP_NAME`
 
 4. Create database schema:
@@ -212,6 +212,8 @@ Defined in `.env.example`:
 
 - `DATABASE_URL=` PostgreSQL connection string
 - `OPENAI_API_KEY=` OpenAI API key
+- `GROQ_API_KEY=` optional Groq key (OpenAI-compatible path)
+- `OPENAI_BASE_URL=` optional base URL override (example: `https://api.groq.com/openai/v1`)
 - `OPENAI_MODEL=` default `gpt-4.1-mini`
 - `OPENAI_TIMEOUT_MS=` request timeout in ms
 - `NEXT_PUBLIC_APP_NAME=` UI app title
