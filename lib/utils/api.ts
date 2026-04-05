@@ -2,11 +2,22 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { AiServiceError } from "@/lib/ai/types";
 
+export class InvalidJsonBodyError extends Error {
+  constructor(message = "Invalid JSON body") {
+    super(message);
+    this.name = "InvalidJsonBodyError";
+  }
+}
+
 export function successResponse<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
 }
 
 export function errorResponse(error: unknown) {
+  if (error instanceof InvalidJsonBodyError) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
   if (error instanceof ZodError) {
     return NextResponse.json(
       {
@@ -30,6 +41,6 @@ export async function parseJsonBody<T = unknown>(request: Request): Promise<T> {
   try {
     return (await request.json()) as T;
   } catch {
-    throw new Error("Invalid JSON body");
+    throw new InvalidJsonBodyError();
   }
 }

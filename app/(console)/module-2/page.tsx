@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, RefreshCw, WandSparkles } from "lucide-react";
+import { AlertTriangle, Download, RefreshCw, Sparkles, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatedContainer } from "@/components/shared/animated-container";
 import { JsonViewer } from "@/components/shared/json-viewer";
@@ -91,6 +91,8 @@ export default function Module2Page() {
       toast.error(error.message || "Module 2 run failed");
     }
   });
+  const mutationErrorMessage =
+    mutation.error instanceof Error ? mutation.error.message : "Module 2 proposal generation failed. Please try again.";
 
   const summaryText = useMemo(() => {
     if (!result) {
@@ -195,6 +197,9 @@ export default function Module2Page() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Client Brief Input</CardTitle>
+              <CardDescription>
+                Budget, required fields, and payload shape are validated before request submission. Business rules rebalance totals to stay budget-safe.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="space-y-4" onSubmit={onSubmit}>
@@ -265,9 +270,19 @@ export default function Module2Page() {
                 </div>
 
                 <Button className="w-full" type="submit" disabled={mutation.isPending}>
+                  <Sparkles className="mr-2 h-4 w-4" />
                   {mutation.isPending ? "Generating Proposal..." : "Generate Proposal"}
                 </Button>
               </form>
+
+              {mutation.isError ? (
+                <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <AlertTriangle className="h-4 w-4" /> Proposal generation failed
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{mutationErrorMessage}</p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </AnimatedContainer>
@@ -348,30 +363,50 @@ export default function Module2Page() {
                   </div>
                 </div>
 
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Unit Cost</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {result.recommendedMix.map((item) => (
-                      <TableRow key={`${item.productName}-${item.category}`}>
-                        <TableCell className="font-medium">{item.productName}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{item.category}</Badge>
-                        </TableCell>
-                        <TableCell>{formatCurrency(item.estimatedUnitCost)}</TableCell>
-                        <TableCell>{item.recommendedQuantity}</TableCell>
-                        <TableCell>{formatCurrency(item.estimatedTotal)}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Unit Cost</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Total</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {result.recommendedMix.map((item) => (
+                        <TableRow key={`${item.productName}-${item.category}`}>
+                          <TableCell className="font-medium">
+                            <p>{item.productName}</p>
+                            <p className="mt-1 text-xs font-normal text-muted-foreground">{item.reason}</p>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{item.category}</Badge>
+                          </TableCell>
+                          <TableCell>{formatCurrency(item.estimatedUnitCost)}</TableCell>
+                          <TableCell>{item.recommendedQuantity}</TableCell>
+                          <TableCell>{formatCurrency(item.estimatedTotal)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+                    <p className="text-xs text-muted-foreground">Products Total</p>
+                    <p className="text-lg font-semibold">{formatCurrency(result.costBreakdown.productsTotal)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+                    <p className="text-xs text-muted-foreground">Estimated Shipping</p>
+                    <p className="text-lg font-semibold">{formatCurrency(result.costBreakdown.estimatedShipping)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border/60 bg-background/40 p-3">
+                    <p className="text-xs text-muted-foreground">Grand Total</p>
+                    <p className="text-lg font-semibold">{formatCurrency(result.costBreakdown.grandTotal)}</p>
+                  </div>
+                </div>
 
                 <div className="rounded-lg border border-border/60 bg-background/40 p-4">
                   <p className="text-sm font-medium">Impact Positioning Summary</p>
@@ -383,7 +418,18 @@ export default function Module2Page() {
             <JsonViewer value={result} title="Module 2 Structured Output" />
           </div>
         </AnimatedContainer>
-      ) : null}
+      ) : (
+        <AnimatedContainer delay={0.2}>
+          <Card className="border-dashed border-border/70">
+            <CardContent className="p-4">
+              <p className="text-sm font-medium">No proposal generated yet</p>
+              <p className="text-sm text-muted-foreground">
+                Load the sample brief or submit a client request to preview budget allocation, cost breakdown, and impact summary.
+              </p>
+            </CardContent>
+          </Card>
+        </AnimatedContainer>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, Sparkles, WandSparkles } from "lucide-react";
+import { AlertTriangle, RefreshCw, Sparkles, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatedContainer } from "@/components/shared/animated-container";
 import { JsonViewer } from "@/components/shared/json-viewer";
@@ -88,6 +88,8 @@ export default function Module1Page() {
       toast.error(error.message || "Module 1 run failed");
     }
   });
+  const mutationErrorMessage =
+    mutation.error instanceof Error ? mutation.error.message : "Module 1 run failed. Please try again.";
 
   const categories = useMemo(() => PRIMARY_CATEGORIES, []);
 
@@ -148,6 +150,9 @@ export default function Module1Page() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Product Input</CardTitle>
+              <CardDescription>
+                Required fields are validated with Zod before request submission. Output is enforced against category/tag/filter business rules.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form className="space-y-4" onSubmit={onSubmit}>
@@ -220,6 +225,15 @@ export default function Module1Page() {
                   {mutation.isPending ? "Generating..." : "Generate Category & Tags"}
                 </Button>
               </form>
+
+              {mutation.isError ? (
+                <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3">
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <AlertTriangle className="h-4 w-4" /> Generation failed
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{mutationErrorMessage}</p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
         </AnimatedContainer>
@@ -279,6 +293,8 @@ export default function Module1Page() {
                 <div className="flex items-center gap-2">
                   <Badge>Primary: {result.primaryCategory}</Badge>
                   <Badge variant="secondary">Sub: {result.subCategory}</Badge>
+                  <Badge variant="outline">{result.seoTags.length} SEO Tags</Badge>
+                  <Badge variant="outline">{result.sustainabilityFilters.length} Filters</Badge>
                   {runInfo ? <StatusBadge status={runInfo.status} /> : null}
                 </div>
 
@@ -312,7 +328,20 @@ export default function Module1Page() {
             <JsonViewer value={result} title="Module 1 Structured Output" />
           </div>
         </AnimatedContainer>
-      ) : null}
+      ) : (
+        <AnimatedContainer delay={0.2}>
+          <Card className="border-dashed border-border/70">
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-sm font-medium">No output generated yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Load the sample input or submit a product brief to preview structured classification JSON.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </AnimatedContainer>
+      )}
     </div>
   );
 }

@@ -26,7 +26,7 @@ export function JsonViewer({ value, title = "Structured JSON" }: { value: unknow
         </Button>
       </CardHeader>
       <CardContent>
-        <pre className="max-h-[420px] overflow-auto rounded-lg bg-background/70 p-4 text-xs leading-5 text-emerald-300">
+        <pre className="max-h-[420px] overflow-auto rounded-lg border border-border/60 bg-background/80 p-4 font-mono text-xs leading-5 text-foreground">
           {formatted}
         </pre>
       </CardContent>

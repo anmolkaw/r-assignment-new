@@ -4,18 +4,47 @@ import { AiServiceError } from "@/lib/ai/types";
 
 let cachedClient: OpenAI | null = null;
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
+const GROQ_ENV_PREFIX = "GROQ_API_KEY=";
+
+type GroqApiKeyDiagnostics = {
+  configured: boolean;
+  normalizedFromPrefixedValue: boolean;
+};
 
 function getGroqApiKey() {
-  const apiKey = process.env.GROQ_API_KEY?.trim();
+  const rawValue = process.env.GROQ_API_KEY?.trim();
 
-  if (!apiKey) {
+  if (!rawValue) {
     throw new AiServiceError(
       "GROQ_API_KEY is missing. Set GROQ_API_KEY in your server environment (for example, in .env).",
       "CONFIG"
     );
   }
 
+  const apiKey = rawValue.startsWith(GROQ_ENV_PREFIX)
+    ? rawValue.slice(GROQ_ENV_PREFIX.length).trim()
+    : rawValue;
+
+  if (!apiKey) {
+    throw new AiServiceError(
+      "GROQ_API_KEY is present but empty after normalization. Store only the raw key value (without 'GROQ_API_KEY=' prefix).",
+      "CONFIG"
+    );
+  }
+
   return apiKey;
+}
+
+export function getGroqApiKeyDiagnostics(): GroqApiKeyDiagnostics {
+  const rawValue = process.env.GROQ_API_KEY?.trim() ?? "";
+  const normalized = rawValue.startsWith(GROQ_ENV_PREFIX)
+    ? rawValue.slice(GROQ_ENV_PREFIX.length).trim()
+    : rawValue;
+
+  return {
+    configured: normalized.length > 0,
+    normalizedFromPrefixedValue: rawValue.startsWith(GROQ_ENV_PREFIX)
+  };
 }
 
 export function getOpenAIClient() {

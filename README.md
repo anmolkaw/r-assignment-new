@@ -206,6 +206,11 @@ npm run lint
 npm run build
 ```
 
+8. Run API regression tests (optional but recommended):
+```bash
+scripts/run-module-api-tests.sh http://localhost:3001
+```
+
 ## Environment Variables
 
 Defined in `.env.example`:
@@ -242,6 +247,11 @@ git check-ignore -v .env .env.local .env.production.local
 [ -n "$GROQ_API_KEY" ] && echo "GROQ_API_KEY loaded" || echo "GROQ_API_KEY missing"
 ```
 
+6. Runtime diagnostics endpoint (safe, no secrets returned):
+```bash
+curl http://localhost:3001/api/diagnostics/env
+```
+
 ## How to Demo Module 1 and Module 2
 
 ### Demo Module 1
@@ -270,6 +280,33 @@ git check-ignore -v .env .env.local .env.production.local
    - structured JSON panel
 5. Use **Download JSON**, **Copy Summary**, and inspect `/logs`
 
+## API Testing
+
+The repository includes a reusable API test script with valid and invalid payloads for both modules:
+
+```bash
+scripts/run-module-api-tests.sh http://localhost:3001
+```
+
+Coverage includes:
+- Valid Module 1 and Module 2 requests
+- Invalid input validation cases
+- Malformed JSON request handling (`400`)
+- Runtime/config failure visibility when provider key is missing
+
+Reference test-case notes:
+- `docs/module-test-cases.md`
+
+## Demo Walkthrough (Evaluator-Friendly)
+
+1. Open `/dashboard` and show stats cards + recent runs table.
+2. Open `/module-1`, click **Load Sample**, then **Generate Category & Tags**.
+3. Highlight structured output JSON panel and recent run history.
+4. Open `/module-2`, click **Load Sample**, then **Generate Proposal**.
+5. Highlight budget summary, cost breakdown, impact summary, and JSON download.
+6. Open `/logs` to show prompt, raw response, parsed JSON, and failure traces.
+7. Open `/architecture` to explain Module 3 and Module 4 implementation plan.
+
 ## Screenshots Placeholders
 
 Add screenshots to:
@@ -287,6 +324,20 @@ Implemented as architecture documentation on `/architecture` page:
 - AI/business split strategy
 - WhatsApp escalation logic
 - Order-linked impact reporting design
+
+Additional documented implementation stubs:
+- Shared JSON schema + Zod validation pattern
+- Proposed models: `ImpactReportRun`, `WhatsAppConversation`, `WhatsAppMessage`, `EscalationEvent`
+- Human handoff triggers (low confidence, policy-sensitive intents, repeated unresolved queries)
+- Auditability approach for generated impact claims
+
+## Mandatory Requirement Mapping
+
+- Structured JSON outputs: enforced via JSON-schema prompts + Zod output validation
+- Prompt + response logging: persisted in `AiLog` with module traceability
+- Environment-based API key handling: `GROQ_API_KEY` server-side only, env-validated
+- AI/business logic separation: `lib/ai/*` and `lib/business/*` with clear responsibilities
+- Error handling and validation: request parsing guards, schema validation, and typed API errors
 
 ## Why This Meets Assignment Criteria
 

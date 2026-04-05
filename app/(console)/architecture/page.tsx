@@ -1,6 +1,7 @@
 import { AnimatedContainer } from "@/components/shared/animated-container";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function ArchitecturePage() {
   return (
@@ -57,6 +58,32 @@ export default function ArchitecturePage() {
           </Card>
         </AnimatedContainer>
       </div>
+
+      <AnimatedContainer delay={0.16}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Shared Implementation Plan</CardTitle>
+            <CardDescription>Cross-module standards for Module 3 and Module 4 when implementation starts.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">Structured JSON Outputs</Badge>
+              <Badge variant="secondary">Prompt + Response Logging</Badge>
+              <Badge variant="secondary">Zod Validation</Badge>
+              <Badge variant="secondary">Server-side Env Handling</Badge>
+              <Badge variant="secondary">Deterministic Business Rules</Badge>
+            </div>
+            <p>
+              Proposed data stores: `ImpactReportRun`, `WhatsAppConversation`, `WhatsAppMessage`, and `EscalationEvent` with
+              the same success/failure traceability pattern used by Module 1 and Module 2.
+            </p>
+            <p>
+              Operational guardrails: queue retries for webhook/report jobs, confidence thresholds for human handoff, and
+              audit fields for every generated claim shown to business users.
+            </p>
+          </CardContent>
+        </Card>
+      </AnimatedContainer>
     </div>
   );
 }
