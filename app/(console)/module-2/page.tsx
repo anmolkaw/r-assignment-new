@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, RefreshCw, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -46,17 +46,26 @@ const initialForm: Module2FormState = {
 
 export default function Module2Page() {
   const queryClient = useQueryClient();
+  const [mounted, setMounted] = useState(false);
 
   const [form, setForm] = useState<Module2FormState>(initialForm);
   const [lastPayload, setLastPayload] = useState<Record<string, unknown> | null>(null);
   const [result, setResult] = useState<Module2Output | null>(null);
   const [runInfo, setRunInfo] = useState<{ runId: string; model: string; status: RunStatus } | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const historyQuery = useQuery({
     queryKey: ["module2-history"],
     queryFn: () => fetcher<{ runs: ProposalRun[] }>("/api/module2/history?limit=8"),
-    enabled: typeof window !== "undefined"
+    enabled: mounted
   });
+
+  const showHistoryLoading = !mounted || historyQuery.isLoading;
+  const historyErrorMessage =
+    historyQuery.error instanceof Error ? historyQuery.error.message : "Unable to load proposal history.";
 
   const mutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) =>
@@ -269,11 +278,19 @@ export default function Module2Page() {
               <CardTitle className="text-lg">Proposal History</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {historyQuery.isLoading ? (
+              {showHistoryLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-12" />
                   <Skeleton className="h-12" />
                   <Skeleton className="h-12" />
+                </div>
+              ) : historyQuery.isError ? (
+                <div className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+                  <p className="text-sm font-medium">Failed to load proposal history</p>
+                  <p className="text-xs text-muted-foreground">{historyErrorMessage}</p>
+                  <Button variant="outline" size="sm" onClick={() => historyQuery.refetch()}>
+                    Retry
+                  </Button>
                 </div>
               ) : historyQuery.data?.runs?.length ? (
                 historyQuery.data.runs.map((run) => (

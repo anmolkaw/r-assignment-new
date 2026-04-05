@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw, Sparkles, WandSparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -43,17 +43,26 @@ const initialForm: Module1FormState = {
 
 export default function Module1Page() {
   const queryClient = useQueryClient();
+  const [mounted, setMounted] = useState(false);
 
   const [form, setForm] = useState<Module1FormState>(initialForm);
   const [lastPayload, setLastPayload] = useState<Module1Request | null>(null);
   const [result, setResult] = useState<Module1Output | null>(null);
   const [runInfo, setRunInfo] = useState<{ runId: string; model: string; status: RunStatus } | null>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const historyQuery = useQuery({
     queryKey: ["module1-history"],
     queryFn: () => fetcher<{ runs: ProductRun[] }>("/api/module1/history?limit=8"),
-    enabled: typeof window !== "undefined"
+    enabled: mounted
   });
+
+  const showHistoryLoading = !mounted || historyQuery.isLoading;
+  const historyErrorMessage =
+    historyQuery.error instanceof Error ? historyQuery.error.message : "Unable to load module history.";
 
   const mutation = useMutation({
     mutationFn: (payload: Module1Request) =>
@@ -221,11 +230,19 @@ export default function Module1Page() {
               <CardTitle className="text-lg">Recent Module 1 Runs</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {historyQuery.isLoading ? (
+              {showHistoryLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-12" />
                   <Skeleton className="h-12" />
                   <Skeleton className="h-12" />
+                </div>
+              ) : historyQuery.isError ? (
+                <div className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+                  <p className="text-sm font-medium">Failed to load recent runs</p>
+                  <p className="text-xs text-muted-foreground">{historyErrorMessage}</p>
+                  <Button variant="outline" size="sm" onClick={() => historyQuery.refetch()}>
+                    Retry
+                  </Button>
                 </div>
               ) : historyQuery.data?.runs?.length ? (
                 historyQuery.data.runs.map((run) => (

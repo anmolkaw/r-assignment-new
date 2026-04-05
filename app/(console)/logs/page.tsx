@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatedContainer } from "@/components/shared/animated-container";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,11 +14,21 @@ import { fetcher } from "@/lib/utils/fetcher";
 import { formatDate } from "@/lib/utils/format";
 
 export default function LogsPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const query = useQuery({
     queryKey: ["logs"],
     queryFn: () => fetcher<{ logs: AiLogRecord[] }>("/api/logs?limit=80"),
-    enabled: typeof window !== "undefined"
+    enabled: mounted
   });
+
+  const showLogsLoading = !mounted || query.isLoading;
+  const logsErrorMessage =
+    query.error instanceof Error ? query.error.message : "Unable to fetch logs at the moment.";
 
   return (
     <div className="space-y-6">
@@ -31,11 +43,19 @@ export default function LogsPage() {
             <CardTitle className="text-lg">Recent AI Logs</CardTitle>
           </CardHeader>
           <CardContent>
-            {query.isLoading ? (
+            {showLogsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-12" />
                 <Skeleton className="h-12" />
                 <Skeleton className="h-12" />
+              </div>
+            ) : query.isError ? (
+              <div className="space-y-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4">
+                <p className="text-sm font-medium">Failed to load logs</p>
+                <p className="text-xs text-muted-foreground">{logsErrorMessage}</p>
+                <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+                  Retry
+                </Button>
               </div>
             ) : query.data?.logs?.length ? (
               <Table>

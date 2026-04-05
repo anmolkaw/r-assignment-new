@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Box, BriefcaseBusiness, TriangleAlert } from "lucide-react";
 import { AnimatedContainer } from "@/components/shared/animated-container";
@@ -15,11 +16,23 @@ import { formatDate } from "@/lib/utils/format";
 import { fetcher } from "@/lib/utils/fetcher";
 
 export default function DashboardPage() {
-  const { data, isLoading } = useQuery({
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const statsQuery = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetcher<DashboardStats>("/api/dashboard/stats"),
-    enabled: typeof window !== "undefined"
+    enabled: mounted
   });
+
+  const data = statsQuery.data;
+  const showStatsLoading = !mounted || statsQuery.isLoading;
+  const showStatsError = mounted && statsQuery.isError;
+  const statsErrorMessage =
+    statsQuery.error instanceof Error ? statsQuery.error.message : "Failed to load dashboard stats.";
 
   return (
     <div className="space-y-6">
@@ -35,12 +48,24 @@ export default function DashboardPage() {
         }
       />
 
-      {isLoading ? (
+      {showStatsLoading ? (
         <div className="grid gap-4 md:grid-cols-3">
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
           <Skeleton className="h-32" />
         </div>
+      ) : showStatsError ? (
+        <Card className="border-destructive/40 bg-destructive/10">
+          <CardHeader>
+            <CardTitle className="text-base">Unable to load dashboard stats</CardTitle>
+            <CardDescription>{statsErrorMessage}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => statsQuery.refetch()}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-3">
           <AnimatedContainer delay={0.05}>
@@ -115,7 +140,9 @@ export default function DashboardPage() {
               <CardDescription>Latest module executions across the system.</CardDescription>
             </CardHeader>
             <CardContent>
-              {data?.recentRuns?.length ? (
+              {showStatsError ? (
+                <p className="text-sm text-muted-foreground">Recent runs are unavailable until stats reload succeeds.</p>
+              ) : data?.recentRuns?.length ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
